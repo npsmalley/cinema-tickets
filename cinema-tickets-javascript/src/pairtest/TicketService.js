@@ -1,61 +1,79 @@
-import TicketTypeRequest from './lib/TicketTypeRequest';
-import InvalidPurchaseException from './lib/InvalidPurchaseException';
+import TicketTypeRequest from './lib/TicketTypeRequest.js';
+import InvalidPurchaseException from './lib/InvalidPurchaseException.js';
 
 export default class TicketService {
-  /**
-   * Should only have private methods other than the one below.
-   */
   purchaseTickets(accountId, ...ticketTypeRequests) {
-    const totalAmount = this.calculateTotalPrice(...ticketTypeRequests);
-    this.makePayment(accountId, totalAmount);
+    this.#validateTicketPurchase(ticketTypeRequests);
 
-    const seatCount = this.calculateSeatCount(...ticketTypeRequests);
-    this.reserveSeats(seatCount);
+    // Calculate the total amount to pay
+    const totalAmountToPay = this.#calculateTotalAmount(ticketTypeRequests);
+
+    // Make a payment request to the external payment service
+    this.#makePayment(accountId, totalAmountToPay);
+
+    // Calculate the total seats to reserve
+    const totalSeatsToAllocate = this.#calculateTotalSeats(ticketTypeRequests);
+
+    // Make a seat reservation request to the external reservation service
+    this.#reserveSeat(accountId, totalSeatsToAllocate);
   }
 
-  calculateTotalPrice(...ticketTypeRequests) {
-    let totalPrice = 0;
+  #validateTicketPurchase(ticketTypeRequests) {
+    if (ticketTypeRequests.length === 0) {
+      throw new InvalidPurchaseException('At least one ticket type request must be provided.');
+    }
 
     for (const request of ticketTypeRequests) {
-      const type = request.getTicketType();
-      const noOfTickets = request.getNoOfTickets();
+      if (!(request instanceof TicketTypeRequest)) {
+        throw new InvalidPurchaseException('Invalid ticket type request.');
+      }
+    }
+  }
 
-      switch (type) {
-        case 'ADULT':
-          totalPrice += 20 * noOfTickets;
-          break;
-        case 'CHILD':
-          totalPrice += 10 * noOfTickets;
-          break;
-        // No price for INFANT as they are free
-        default:
-          break;
+  #calculateTotalAmount(ticketTypeRequests) {
+    let totalAmount = 0;
+
+    for (const request of ticketTypeRequests) {
+      totalAmount += this.#getTicketPrice(request) * request.noOfTickets;
+    }
+
+    return totalAmount;
+  }
+
+  #getTicketPrice(request) {
+    switch (request.type) {
+      case 'INFANT':
+        return 0;
+      case 'CHILD':
+        return 10;
+      case 'ADULT':
+        return 20;
+      default:
+        throw new InvalidPurchaseException('Invalid ticket type.');
+    }
+  }
+
+  #makePayment(accountId, totalAmountToPay) {
+    // Make a payment request to the external payment service
+    const paymentService = new TicketPaymentService();
+    paymentService.makePayment(accountId, totalAmountToPay);
+  }
+
+  #calculateTotalSeats(ticketTypeRequests) {
+    let totalSeats = 0;
+
+    for (const request of ticketTypeRequests) {
+      if (request.type !== 'INFANT') {
+        totalSeats += request.noOfTickets;
       }
     }
 
-    return totalPrice;
+    return totalSeats;
   }
 
-  makePayment(accountId, amount) {
-    // Payment logic here
-  }
-
-  calculateSeatCount(...ticketTypeRequests) {
-    let seatCount = 0;
-
-    for (const request of ticketTypeRequests) {
-      const type = request.getTicketType();
-      const noOfTickets = request.getNoOfTickets();
-
-      if (type !== 'INFANT') {
-        seatCount += noOfTickets;
-      }
-    }
-
-    return seatCount;
-  }
-
-  reserveSeats(seatCount) {
-    // Seat reservation logic here
+  #reserveSeat(accountId, totalSeatsToAllocate) {
+    // Make a seat reseervation request to the external reservation service
+    const reservationService = new SeatReservationService();
+    reservationService.reserveSeat(accountId, totalSeatsToAllocate);
   }
 }

@@ -10,35 +10,45 @@ describe('TicketService', () => {
     ticketService = new TicketService();
   });
 
-  it('should calculate total price correctly for valid ticket requests', () => {
-    const ticketRequest1 = new TicketTypeRequest('ADULT', 2);
-    const ticketRequest2 = new TicketTypeRequest('CHILD', 3);
-    const totalPrice = ticketService.calculateTotalPrice(ticketRequest1, ticketRequest2);
-    expect(totalPrice).toEqual(70);
+  it('should throw an exception if no ticket type requests are provided', () => {
+    expect(() => {
+      ticketService.purchaseTickets(123);
+    }).toThrow(InvalidPurchaseException);
   });
 
-  it('should calculate seat count correctly for valid ticket requests', () => {
-    const ticketRequest1 = new TicketTypeRequest('ADULT', 2);
-    const ticketRequest2 = new TicketTypeRequest('CHILD', 3);
-    const seatCount = ticketService.calculateSeatCount(ticketRequest1, ticketRequest2);
-    expect(seatCount).toEqual(5);
+  it('should throw an exception for invalid ticket type requests', () => {
+    const invalidRequest = new TicketTypeRequest('INVALID', 3);
+
+    expect(() => {
+      ticketService.purchaseTickets(123, invalidRequest);
+    }).toThrow(InvalidPurchaseException);
   });
 
-  it('should make payment and reserve seats for valid ticket purchases', () => {
-    const accountId = 123;
-    const ticketRequest1 = new TicketTypeRequest('ADULT', 2);
-    const ticketRequest2 = new TicketTypeRequest('CHILD', 3);
+  it('should calculate the correct total amount and make a payment', () => {
+    const adultTicket = new TicketTypeRequest('ADULT', 2);
+    const childTicket = new TicketTypeRequest('CHILD', 1);
 
-    // Mock the makePayment and reserveSeats methods
-    ticketService.makePayment = jest.fn();
-    ticketService.reserveSeats = jest.fn();
+    const mockPaymentService = {
+      makePayment: jest.fn(),
+    };
+    ticketService.paymentService = mockPaymentService;
 
-    ticketService.purchaseTickets(accountId, ticketRequest1, ticketRequest2);
+    ticketService.purchaseTickets(123, adultTicket, childTicket);
 
-    // Expect makePayment to be called with the correct arguments
-    expect(ticketService.makePayment).toHaveBeenCalledWith(accountId, 70);
+    expect(mockPaymentService.makePayment).toHaveBeenCalledWith(123, 50); // Total amount: 2*20 + 1*10 = 50
+  });
 
-    // Expect reserveSeats to be called with the correct argument
-    expect(ticketService.reserveSeats).toHaveBeenCalledWith(5);
+  it('should calculate the correct total seats and make a seat reservation', () => {
+    const adultTicket = new TicketTypeRequest('ADULT', 2);
+    const childTicket = new TicketTypeRequest('CHILD', 1);
+
+    const mockReservationService = {
+      reserveSeat: jest.fn(),
+    };
+    ticketService.reservationService = mockReservationService;
+
+    ticketService.purchaseTickets(123, adultTicket, childTicket);
+
+    expect(mockReservationService.reserveSeat).toHaveBeenCalledWith(123, 3); // Total seats: 2 + 1 = 3
   });
 });
