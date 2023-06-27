@@ -1,6 +1,9 @@
 import TicketTypeRequest from './lib/TicketTypeRequest.js';
 import InvalidPurchaseException from './lib/InvalidPurchaseException.js';
 
+import TicketPaymentService from '../thirdparty/paymentgateway/TicketPaymentService';
+import SeatReservationService from '../thirdparty/seatbooking/SeatReservationService';
+
 export default class TicketService {
   purchaseTickets(accountId, ...ticketTypeRequests) {
     this.#validateTicketPurchase(ticketTypeRequests);

@@ -3,6 +3,12 @@ import TicketService from '../src/pairtest/TicketService';
 import TicketTypeRequest from '../src/pairtest/lib/TicketTypeRequest';
 import InvalidPurchaseException from '../src/pairtest/lib/InvalidPurchaseException';
 
+import TicketPaymentService from '../src/thirdparty/paymentgateway/TicketPaymentService';
+import SeatReservationService from '../src/thirdparty/seatbooking/SeatReservationService';
+
+jest.mock('../src/thirdparty/paymentgateway/TicketPaymentService');
+jest.mock('../src/thirdparty/seatbooking/SeatReservationService');
+
 describe('TicketService', () => {
   let ticketService;
 
@@ -20,12 +26,9 @@ describe('TicketService', () => {
     const adultTicket = new TicketTypeRequest('ADULT', 2);
     const childTicket = new TicketTypeRequest('CHILD', 1);
 
-    const mockPaymentService = {
-      makePayment: jest.fn(),
-    };
-    ticketService.paymentService = mockPaymentService;
-
     ticketService.purchaseTickets(123, adultTicket, childTicket);
+
+    const mockPaymentService = TicketPaymentService.mock.instances[0];
 
     expect(mockPaymentService.makePayment).toHaveBeenCalledWith(123, 50); // Total amount: 2*20 + 1*10 = 50
   });
@@ -34,12 +37,9 @@ describe('TicketService', () => {
     const adultTicket = new TicketTypeRequest('ADULT', 2);
     const childTicket = new TicketTypeRequest('CHILD', 1);
 
-    const mockReservationService = {
-      reserveSeat: jest.fn(),
-    };
-    ticketService.reservationService = mockReservationService;
-
     ticketService.purchaseTickets(123, adultTicket, childTicket);
+
+    const mockReservationService = SeatReservationService.mock.instances[0];
 
     expect(mockReservationService.reserveSeat).toHaveBeenCalledWith(123, 3); // Total seats: 2 + 1 = 3
   });
