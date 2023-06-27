@@ -34,14 +34,14 @@ export default class TicketService {
     let totalAmount = 0;
 
     for (const request of ticketTypeRequests) {
-      totalAmount += this.#getTicketPrice(request) * request.noOfTickets;
+      totalAmount += this.#getTicketPrice(request) * request.getNoOfTickets();
     }
 
     return totalAmount;
   }
 
   #getTicketPrice(request) {
-    switch (request.type) {
+    switch (request.getTicketType()) {
       case 'INFANT':
         return 0;
       case 'CHILD':
@@ -64,7 +64,7 @@ export default class TicketService {
 
     for (const request of ticketTypeRequests) {
       if (request.type !== 'INFANT') {
-        totalSeats += request.noOfTickets;
+        totalSeats += request.getNoOfTickets();
       }
     }
 
