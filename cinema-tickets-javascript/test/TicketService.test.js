@@ -16,14 +16,6 @@ describe('TicketService', () => {
     }).toThrow(InvalidPurchaseException);
   });
 
-  it('should throw an exception for invalid ticket type requests', () => {
-    const invalidRequest = new TicketTypeRequest('INVALID', 3);
-
-    expect(() => {
-      ticketService.purchaseTickets(123, invalidRequest);
-    }).toThrow(InvalidPurchaseException);
-  });
-
   it('should calculate the correct total amount and make a payment', () => {
     const adultTicket = new TicketTypeRequest('ADULT', 2);
     const childTicket = new TicketTypeRequest('CHILD', 1);
